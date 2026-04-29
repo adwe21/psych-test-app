@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  psych-test-app:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    volumes:
+      - ./logs:/var/log/nginx
