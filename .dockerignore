@@ -1,0 +1,10 @@
+.git
+.github
+.pytest_cache
+__pycache__
+*.pyc
+node_modules
+*.md
+deploy/
+!Dockerfile
+!nginx.conf.tpl

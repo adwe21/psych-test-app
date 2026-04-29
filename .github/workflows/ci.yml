@@ -1,0 +1,43 @@
+name: CI - Build & Smoke Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend deps
+        run: pip install -r backend/requirements.txt
+
+      - name: Run backend tests
+        run: pytest qa/tests/ -v
+
+      - name: Build Docker image
+        run: docker build -t psych-test-app .
+
+      - name: Smoke test Docker image
+        run: |
+          docker run -d --name psych-test -p 8080:8080 -e PORT=8080 psych-test-app
+          # Wait for services to start
+          for i in $(seq 1 15); do
+            if curl -sf http://127.0.0.1:8080/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          # Check backend health
+          curl -sf http://127.0.0.1:8080/health || { echo "Health check failed"; docker logs psych-test; exit 1; }
+          # Check frontend served by nginx
+          curl -sf http://127.0.0.1:8080/ | grep -q "DOCTYPE\|html" || { echo "Frontend not served"; docker logs psych-test; exit 1; }
+          docker stop psych-test && docker rm psych-test
