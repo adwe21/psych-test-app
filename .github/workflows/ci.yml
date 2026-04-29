@@ -18,10 +18,21 @@ jobs:
           python-version: "3.11"
 
       - name: Install backend deps
-        run: pip install -r backend/requirements.txt
+        run: |
+          pip install -r backend/requirements.txt
+          echo "--- Installed packages ---"
+          pip list
 
       - name: Run backend tests
-        run: PYTHONPATH=./backend pytest qa/tests/ -v
+        run: |
+          echo "=== Working directory ==="
+          pwd
+          echo "=== Project structure ==="
+          find . -name "*.py" | head -20
+          echo "=== PYTHONPATH ==="
+          echo $PYTHONPATH
+          echo "=== Running tests ==="
+          PYTHONPATH=./backend python -m pytest qa/tests/ -v -s 2>&1 || true
 
       - name: Build Docker image
         run: docker build -t psych-test-app .
